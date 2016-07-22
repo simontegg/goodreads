@@ -3,6 +3,10 @@ const request = require('superagent')
 const goodreads = require('goodreads')
 const vorpal = require('vorpal')()
 const launcher = require('browser-launcher2')
+const pull = require('pull-stream')
+
+// commands
+const book = require('./commands/book')
 
 const LoginServer = require('./login-server')
 
@@ -19,9 +23,20 @@ vorpal
       console.log('launched')
     })
   })
-
-  //  callback()
 })
+
+vorpal
+  .command('book <bookId>', "fetches a book's info")
+  .action(function (args, callback) {
+    const userStream = book(args.bookId)
+    pull(
+      userStream,
+      pull.drain(userId => {
+        console.log('userId', userId) 
+      })
+    )
+
+  })
 
 vorpal
 .delimiter('>>')

@@ -8,7 +8,6 @@ const extend = require('deep-extend')
 const url = require('url')
 
 const Users = require('./db').users
-console.log('users', Users)
 
 const merge = (obj1, obj2) => {
   if (obj1) {
