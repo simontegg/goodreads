@@ -43,8 +43,8 @@ function routerFunc (done) {
       fakeSession.oauthTokenSecret,
       params.query.authorize,
       resp => {
-        Users.get(resp.userid, (err, user) => {
-          Users.put(resp.userid, merge(user, resp), err => {
+        Users.get('current', (err, user) => {
+          Users.put('current', merge(user, resp), err => {
             done()
           })
         })
