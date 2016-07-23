@@ -4,6 +4,7 @@ const vorpal = require('vorpal')()
 const launcher = require('browser-launcher2')
 const pull = require('pull-stream')
 const pl = require('pull-level')
+const delay = require('pull-delay')
 const extend = require('deep-extend')
 const request = require('superagent') 
 require('superagent-auth-bearer')(request)
@@ -17,6 +18,7 @@ const Ratings = require('./db').ratings
 // commands
 const book = require('./commands/book-library-thing')
 const compare = require('./commands/compare')
+const userRatings = require('./commands/user-ratings')
 const LoginServer = require('./login-server')
 let currentUserId
 
@@ -41,19 +43,18 @@ vorpal
   .action(function (args, callback) {
     pull(
       book(args.bookId),
-
-      pull.map(rating => {
-        console.log(rating)
-        return {
-          type: 'put',
-          key: `${rating.username}-${rating.bookId}`,
-          value: rating
-        }
+      pull.asyncMap((rating, cb) => {
+        pull(
+          compare(rating.username, args.username),
+          pull.collect((err, ratings) => {
+            cb(null, ratings)
+          })
+        )
       }),
-      pull.collect((err, ops) => {
-        Ratings.batch(ops, err => {
-          callback()
-        })
+      delay(1001),
+      pull.flatten(),
+      pull.collect((err, ratings) => {
+        console.log('common ratings', ratings) 
       })
     )
   })
@@ -70,6 +71,17 @@ vorpal
     )
   })
 
+vorpal
+  .command('ratings <username>', 'fetch user ratings')
+  .action(function (args, callback) {
+    pull(
+      userRatings(args.username),
+      pull.collect((err, ratings) => {
+        console.log('ratings', ratings)
+        callback()
+      })
+    )
+  })
 
 vorpal
 .delimiter('>>')

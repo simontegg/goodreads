@@ -7,9 +7,9 @@ const Url = require('url')
 const superagent = require('superagent')
 const extend = require('deep-extend')
 
-function getRating ($row) {
+function getRating ($row, $) {
   return $row
-    .find('img[src=""https://pics.cdn.librarything.com/pics/s-s.gif"]')
+    .find('.rw > img[src="http://pics.cdn.librarything.com/pics/s-s.gif"]')
     .length
 }
 
@@ -36,23 +36,21 @@ function makeUrl (usernames) {
     protocol: 'http',
     hostname: 'www.librarything.com',
     pathname: 'catalog_bottom.php',
-    query: { view: usernames.a, compare: usernames.b }
+    query: { view: usernames[0], compare: usernames[1] }
   })
 }
 
 
 module.exports = function (username1, username2) {
+  console.log(username1)
   return pull(
-    pull.once({ a: username1, b: username2 }),
+    pull.once([username1, username2]),
     pull.map(makeUrl),
     pull.asyncMap(superagent.get),
     pull.map(res => res.text),
     pull.map(getRatings),
-    pull.map(rating => {
-      console.log('rating', rating)
-      return rating
-    }),
     pull.flatten(),
+    pull.filter(rating => rating.rating > 0),
     pull.map(rating => {
       return extend(rating, { username: username1 })
     })
