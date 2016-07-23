@@ -36,7 +36,8 @@ function extractUserWhoRate (html) {
 function book (bookId, callback) {
   const users = Pushable()
   const client = webdriverio.remote(options)
-  
+    
+
   client
   .init()
   .url(`https://www.goodreads.com/book/show/${bookId}?key=${process.env.KEY}`)
