@@ -37,16 +37,39 @@ vorpal
 })
 
 vorpal
-  .command('book <bookId>', "fetches some user ratings who rate the book 4 or 5 stars")
+  .command('book <bookId> <username>', "fetches some user ratings who rate the book 4 or 5 stars")
   .action(function (args, callback) {
     pull(
       book(args.bookId),
-      pull.drain(html => {
-        console.log('html', html)
+
+      pull.map(rating => {
+        console.log(rating)
+        return {
+          type: 'put',
+          key: `${rating.username}-${rating.bookId}`,
+          value: rating
+        }
+      }),
+      pull.collect((err, ops) => {
+        Ratings.batch(ops, err => {
+          callback()
+        })
+      })
+    )
+  })
+
+vorpal
+  .command('compare <username1> <username2>', 'compares 2 users')
+  .action(function (args, callback) {
+    pull(
+      compare(args.username1, args.username2),
+      pull.collect((err, ratings) => {
+        console.log('ratings', ratings)
         callback()
       })
     )
   })
+
 
 vorpal
 .delimiter('>>')
